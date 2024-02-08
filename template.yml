@@ -1,0 +1,212 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: template-api-rest-net-core
+  title: API REST with ASP.NET Core
+  description: Plantilla API RestFul para microservicios en ASP.NET Core.
+  tags:
+    - net-core
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    dev.azure.com/project-repo: Arquitectura/template-api-rest-net-core
+  links:
+    - url: https://catalogo-telefonicaco.telefonicawebsites.co/catalog/default/template/template-api-rest-net-core/azure-docs
+      title: Introduction of API REST with ASP.NET Core
+spec:
+  owner: group:CoeDesarrollo
+  type: service
+  parameters:
+    - title: Datos de Repositorio
+      required:
+        - name
+        - description
+        - namespace
+        - organizationAndTrain
+        - project
+      properties:
+        name:
+          title: Repositorio
+          type: string
+          description: Nombre único del repositorio.
+          pattern: "^([a-z][a-z0-9]*)(-[a-z0-9]+)*$"
+          ui:autofocus: true
+        description:
+          title: Descripción
+          type: string
+          description: Descripcion breve y especifica del Microservicio.
+        namespace:
+          title: Namespace
+          type: string
+          description: Nombre del espacio asignado para desplegar el Microservicio.
+        organizationAndTrain:
+          title: Organización y Tren
+          type: object
+          description: Organización propietaria del repositorio
+          ui:field: CelulasYTrenes
+        project:
+          title: Proyecto
+          type: string
+          description: Proyecto al que pertenece el repositorio.
+    - title: Datos de Gobierno
+      required:
+        - platform
+        - integration
+        - segment
+        - product
+        - fdomain
+      properties:
+        consumer:
+          title: Consumidores
+          type: string
+          description: Componente(s) de origen que consume(n) el servicio.
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Component
+        destination:
+          title: Productores
+          type: string
+          description: Componente(s) de destino que usa el servicio.
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Component
+        platform:
+          title: Plataforma Despliegue
+          type: string
+          description: Plataforma donde se desplegara el servicio.
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: System
+        integration:
+          title: Integración
+          type: string
+          description: Servicio se puede reusar o es propietario.
+          enum:
+            - reuso
+            - sin-reuso
+            - reuso-con-aprobacion
+        segment:
+          title: Segmento
+          type: string
+          description: Segmento de negocio asociado el servicio.
+          enum:
+            - b2b
+            - b2c
+            - convergente
+        product:
+          title: Producto
+          type: string
+          description: Producto asociado al servicio.
+          enum:
+            - fijo
+            - movil
+            - convergente
+            - productos-digitales
+            - productos-robustos-b2b
+        fdomain:
+          title: Dominio Funcional
+          type: string
+          description: Linea de servicio asociada al componente.
+          enum:
+            - pagos
+            - recargas
+            - aprovisionamiento
+            - facturacion
+        internet:
+          title: Visibilidad Desde Internet
+          type: boolean
+          description: Visibilidad desde internet.
+          ui:widget: radio
+    - title: Datos de inventario seguridad
+      required:
+        - criticidadsvc
+        - clasifinfosvc
+        - cumplnormativosvc
+      properties:
+        criticidadsvc:
+          title: Criticidad
+          type: string
+          description: "Nivel de Criticidad del Servicio, obtenga el resultado en: https://wbogvm33/seguridad/vista/otros/criticidadActivos.php"
+          enum:
+            - critico
+            - no-critico
+        clasifinfosvc:
+          title: Clasificacion de la Informacion
+          type: string
+          description: Clasificacion de la informacion
+          enum:
+            - uso-interno
+            - publico
+            - uso-interno-restringido
+            - reservado
+        cumplnormativosvc:
+          title: Cumplimiento Normativo
+          type: string
+          description: Cumplimiento Normativo (telefonica por defecto)
+          enum:
+            - telefonica
+            - sox
+            - pci-dss
+  steps:
+    - id: fetch-base
+      name: Fetch Base
+      action: fetch:template
+      input:
+        url: ./content
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          namespace: ${{ parameters.namespace }}
+          organization: ${{ parameters.organizationAndTrain.celula }}
+          tren: ${{ parameters.organizationAndTrain.tren }}
+          repoUrl: dev.azure.com?owner=${{ parameters.project }}&repo=${{ parameters.name }}&organization=${{ parameters.organizationAndTrain.celula }}
+          azureDevOpsUrl: https://dev.azure.com/${{ parameters.organizationAndTrain.celula }}/${{ parameters.project }}/_git/${{ parameters.name }}
+          segment: ${{ parameters.segment }}
+          product: ${{ parameters.product }}
+          fdomain: ${{ parameters.fdomain }}
+          integration: ${{ parameters.integration }}
+          platform: ${{ parameters.platform }}
+          criticidadsvc: ${{ parameters.criticidadsvc }}
+          clasifinfosvc: ${{ parameters.clasifinfosvc }}
+          cumplnormativosvc: ${{ parameters.cumplnormativosvc }}
+          consumer: ${{ parameters.consumer }}
+          destination: ${{ parameters.destination }}
+    - id: publish
+      name: Publish
+      action: publish:azure
+      input:
+        allowedHosts: ["dev.azure.com"]
+        description: This is ${{parameters.name}}
+        repoUrl: dev.azure.com?owner=${{ parameters.project }}&repo=${{ parameters.name }}&organization=${{ parameters.organizationAndTrain.celula }}
+    - id: register
+      name: Register
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{steps['publish'].output.repoContentsUrl}}
+        catalogInfoPath: "/catalog-info.yaml"
+    - id: backstage_request
+      name: kiuwan
+      action: http:backstage:request
+      input:
+        method: "POST"
+        path: "/proxy/secure-development-reporter"
+        headers:
+          content-type: "application/json"
+        body:
+          urlRepository: ${{steps['publish'].output.repoContentsUrl}}
+          agileTrain: ${{ parameters.organizationAndTrain.tren }}
+          agileCell: ${{ parameters.organizationAndTrain.celula }}
+          projectName: ${{ parameters.name }}
+          microserviceName: ${{ parameters.name }}
+          branch: "test"
+          internetExposure: ${{ parameters.internet }}
+          developmentLanguaje: "net-core"
+  output:
+    links:
+      - title: Repository
+        url: ${{steps['publish'].output.remoteUrl}}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{steps['register'].output.entityRef}}
