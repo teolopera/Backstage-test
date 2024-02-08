@@ -9,7 +9,7 @@ properties:
   name:
     title: Repositorio Test
     type: string
-    description: Nombre único del repositorio.
+    description: Nombre único del repositorio Test.
     pattern: "^([a-z][a-z0-9]*)(-[a-z0-9]+)*$"
     ui:autofocus: true
   description:
