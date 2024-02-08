@@ -7,7 +7,7 @@ required:
   - project
 properties:
   name:
-    title: Repositorio
+    title: Repositorio Test
     type: string
     description: Nombre único del repositorio.
     pattern: "^([a-z][a-z0-9]*)(-[a-z0-9]+)*$"
