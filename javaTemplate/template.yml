@@ -16,7 +16,7 @@ spec:
   owner: group:CoeDesarrollo
   type: service
   parameters:
-    - $yaml: ./defaults/parameters/parameters-one.yaml
+    - $yaml: ../defaults/parameters/parameters-one.yaml
     - title: Datos de Gobierno
       required:
         - platform
