@@ -2,7 +2,7 @@ apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: template-api-rest-net-core
-  title: API REST with ASP.NET Core
+  title: API REST with ASP.NET Core Test
   description: Plantilla API RestFul para microservicios en ASP.NET Core.
   tags:
     - net-core
